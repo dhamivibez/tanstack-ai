@@ -39,6 +39,7 @@ program
     "-k, --api-key <key>",
     "API key (can also be set via environment variable)"
   )
+  .option("-d, --debug", "Show raw JSON stream chunks (for debugging)")
   .action(async (options) => {
     await runChat(options);
   });
@@ -308,35 +309,90 @@ async function runChat(options: any) {
     try {
       const model = options.model || getDefaultModel(options.provider);
 
-      if (options.provider === "ollama") {
-        // For Ollama, we'll use streaming
-        spinner.text = "Assistant:";
-        spinner.stopAndPersist({ symbol: chalk.blue("🤖") });
+      // Use structured streaming for ALL providers
+      spinner.text = "Assistant:";
+      spinner.stopAndPersist({ symbol: chalk.blue("🤖") });
 
-        for await (const chunk of ai.chatStream({ model, messages })) {
-          process.stdout.write(chunk.content);
-        }
-        console.log("\n");
+      let fullContent = "";
+      let totalTokens = 0;
 
-        // Add a placeholder assistant message for context
-        messages.push({
-          role: "assistant",
-          content: "Response provided above",
-        });
-      } else {
-        const response = await ai.chat({
-          model,
-          messages,
-          temperature: 0.7,
-          maxTokens: 1000,
-        });
-
-        spinner.stop();
-        console.log(chalk.blue("\n🤖 Assistant:"), response.content);
-        console.log(chalk.gray(`\n[Tokens: ${response.usage.totalTokens}]\n`));
-
-        messages.push({ role: "assistant", content: response.content });
+      if (options.debug) {
+        console.log(chalk.gray("\n--- Streaming JSON Chunks ---\n"));
       }
+
+      // Stream with structured JSON chunks
+      for await (const chunk of ai.streamChat({
+        model,
+        messages,
+        temperature: 0.7,
+        maxTokens: 1000,
+      })) {
+        // Debug mode: show raw JSON
+        if (options.debug) {
+          console.log(chalk.gray(JSON.stringify(chunk)));
+        }
+
+        if (chunk.type === "content") {
+          // Write the delta (new token) to stdout
+          if (!options.debug) {
+            process.stdout.write(chunk.delta);
+          }
+          fullContent = chunk.content;
+        } else if (chunk.type === "tool_call") {
+          // Handle tool calls
+          const toolName = chunk.toolCall.function.name;
+          const toolArgs = chunk.toolCall.function.arguments;
+          console.log(chalk.cyan(`\n🔧 Tool call: ${toolName}`));
+          if (toolArgs) {
+            console.log(chalk.gray(`   Arguments: ${toolArgs}`));
+          }
+        } else if (chunk.type === "done") {
+          // Show token usage
+          if (chunk.usage) {
+            totalTokens = chunk.usage.totalTokens;
+            if (options.debug) {
+              console.log(
+                chalk.green(`\n✅ Done! Reason: ${chunk.finishReason}`)
+              );
+              console.log(
+                chalk.gray(`   Prompt tokens: ${chunk.usage.promptTokens}`)
+              );
+              console.log(
+                chalk.gray(
+                  `   Completion tokens: ${chunk.usage.completionTokens}`
+                )
+              );
+              console.log(
+                chalk.gray(`   Total tokens: ${chunk.usage.totalTokens}`)
+              );
+            }
+          }
+        } else if (chunk.type === "error") {
+          console.error(chalk.red(`\n❌ Error: ${chunk.error.message}`));
+          if (chunk.error.code) {
+            console.error(chalk.gray(`   Code: ${chunk.error.code}`));
+          }
+        }
+      }
+
+      if (options.debug) {
+        console.log(chalk.gray("\n--- End of Stream ---\n"));
+        if (fullContent) {
+          console.log(chalk.blue("Full response:"), fullContent);
+        }
+      } else {
+        console.log("\n");
+      }
+
+      if (totalTokens > 0 && !options.debug) {
+        console.log(chalk.gray(`[Tokens: ${totalTokens}]\n`));
+      }
+
+      // Add the full response to conversation history
+      messages.push({
+        role: "assistant",
+        content: fullContent,
+      });
     } catch (error) {
       spinner.stop();
       console.error(chalk.red("\nError:"), error);

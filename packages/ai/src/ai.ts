@@ -3,6 +3,7 @@ import type {
   ChatCompletionOptions,
   ChatCompletionResult,
   ChatCompletionChunk,
+  StreamChunk,
   TextGenerationOptions,
   TextGenerationResult,
   SummarizationOptions,
@@ -33,12 +34,22 @@ export class AI {
   }
 
   /**
-   * Complete a chat conversation with streaming
+   * Complete a chat conversation with streaming (legacy)
+   * @deprecated Use streamChat() for structured streaming with JSON chunks
    */
   async *chatStream(
     options: ChatCompletionOptions
   ): AsyncIterable<ChatCompletionChunk> {
     yield* this.adapter.chatCompletionStream({ ...options, stream: true });
+  }
+
+  /**
+   * Stream chat with structured JSON chunks (supports tools and detailed token info)
+   */
+  async *streamChat(
+    options: ChatCompletionOptions
+  ): AsyncIterable<StreamChunk> {
+    yield* this.adapter.chatStream({ ...options, stream: true });
   }
 
   /**

@@ -1,6 +1,7 @@
 import { Ollama } from "ollama";
 import {
   BaseAdapter,
+  convertLegacyStream,
   type AIAdapterConfig,
   type ChatCompletionOptions,
   type ChatCompletionResult,
@@ -11,6 +12,7 @@ import {
   type SummarizationResult,
   type EmbeddingOptions,
   type EmbeddingResult,
+  type StreamChunk,
 } from "@tanstack/ai";
 
 export interface OllamaAdapterConfig extends AIAdapterConfig {
@@ -34,8 +36,8 @@ export class OllamaAdapter extends BaseAdapter {
     const response = await this.client.chat({
       model: options.model || "llama2",
       messages: options.messages.map((msg) => ({
-        role: msg.role,
-        content: msg.content,
+        role: msg.role as "user" | "assistant" | "system",
+        content: msg.content || "",
       })),
       options: {
         temperature: options.temperature,
@@ -72,8 +74,8 @@ export class OllamaAdapter extends BaseAdapter {
     const response = await this.client.chat({
       model: options.model || "llama2",
       messages: options.messages.map((msg) => ({
-        role: msg.role,
-        content: msg.content,
+        role: msg.role as "user" | "assistant" | "system",
+        content: msg.content || "",
       })),
       options: {
         temperature: options.temperature,
@@ -93,6 +95,17 @@ export class OllamaAdapter extends BaseAdapter {
         finishReason: chunk.done ? "stop" : null,
       };
     }
+  }
+
+  async *chatStream(
+    options: ChatCompletionOptions
+  ): AsyncIterable<StreamChunk> {
+    // Use legacy stream converter for now
+    // TODO: Implement native structured streaming for Ollama
+    yield* convertLegacyStream(
+      this.chatCompletionStream(options),
+      options.model || "llama2"
+    );
   }
 
   async generateText(

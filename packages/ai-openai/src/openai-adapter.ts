@@ -40,17 +40,42 @@ export class OpenAIAdapter extends BaseAdapter {
   ): Promise<ChatCompletionResult> {
     const response = await this.client.chat.completions.create({
       model: options.model || "gpt-3.5-turbo",
-      messages: options.messages.map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-        name: msg.name,
-      })),
+      messages: options.messages.map((msg) => {
+        if (msg.role === "tool" && msg.toolCallId) {
+          return {
+            role: "tool" as const,
+            content: msg.content || "",
+            tool_call_id: msg.toolCallId,
+          };
+        }
+        if (msg.role === "assistant" && msg.toolCalls) {
+          return {
+            role: "assistant" as const,
+            content: msg.content,
+            tool_calls: msg.toolCalls.map((tc) => ({
+              id: tc.id,
+              type: tc.type,
+              function: tc.function,
+            })),
+          };
+        }
+        return {
+          role: msg.role as "system" | "user" | "assistant",
+          content: msg.content || "",
+          name: msg.name,
+        };
+      }),
       temperature: options.temperature,
       max_tokens: options.maxTokens,
       top_p: options.topP,
       frequency_penalty: options.frequencyPenalty,
       presence_penalty: options.presencePenalty,
       stop: options.stopSequences,
+      tools: options.tools?.map((t) => ({
+        type: t.type,
+        function: t.function,
+      })),
+      tool_choice: options.toolChoice as any,
       stream: false,
     });
 
@@ -59,9 +84,14 @@ export class OpenAIAdapter extends BaseAdapter {
     return {
       id: response.id,
       model: response.model,
-      content: choice.message.content || "",
+      content: choice.message.content,
       role: "assistant",
       finishReason: choice.finish_reason as any,
+      toolCalls: choice.message.tool_calls?.map((tc) => ({
+        id: tc.id,
+        type: tc.type,
+        function: tc.function,
+      })),
       usage: {
         promptTokens: response.usage?.prompt_tokens || 0,
         completionTokens: response.usage?.completion_tokens || 0,
@@ -75,11 +105,31 @@ export class OpenAIAdapter extends BaseAdapter {
   ): AsyncIterable<ChatCompletionChunk> {
     const stream = await this.client.chat.completions.create({
       model: options.model || "gpt-3.5-turbo",
-      messages: options.messages.map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-        name: msg.name,
-      })),
+      messages: options.messages.map((msg) => {
+        if (msg.role === "tool" && msg.toolCallId) {
+          return {
+            role: "tool" as const,
+            content: msg.content || "",
+            tool_call_id: msg.toolCallId,
+          };
+        }
+        if (msg.role === "assistant" && msg.toolCalls) {
+          return {
+            role: "assistant" as const,
+            content: msg.content,
+            tool_calls: msg.toolCalls.map((tc) => ({
+              id: tc.id,
+              type: tc.type,
+              function: tc.function,
+            })),
+          };
+        }
+        return {
+          role: msg.role as "system" | "user" | "assistant",
+          content: msg.content || "",
+          name: msg.name,
+        };
+      }),
       temperature: options.temperature,
       max_tokens: options.maxTokens,
       top_p: options.topP,
@@ -100,6 +150,125 @@ export class OpenAIAdapter extends BaseAdapter {
           finishReason: chunk.choices[0]?.finish_reason as any,
         };
       }
+    }
+  }
+
+  async *chatStream(
+    options: ChatCompletionOptions
+  ): AsyncIterable<import("@tanstack/ai").StreamChunk> {
+    const stream = await this.client.chat.completions.create({
+      model: options.model || "gpt-3.5-turbo",
+      messages: options.messages.map((msg) => {
+        if (msg.role === "tool" && msg.toolCallId) {
+          return {
+            role: "tool" as const,
+            content: msg.content || "",
+            tool_call_id: msg.toolCallId,
+          };
+        }
+        if (msg.role === "assistant" && msg.toolCalls) {
+          return {
+            role: "assistant" as const,
+            content: msg.content,
+            tool_calls: msg.toolCalls.map((tc) => ({
+              id: tc.id,
+              type: tc.type,
+              function: tc.function,
+            })),
+          };
+        }
+        return {
+          role: msg.role as "system" | "user" | "assistant",
+          content: msg.content || "",
+          name: msg.name,
+        };
+      }),
+      temperature: options.temperature,
+      max_tokens: options.maxTokens,
+      top_p: options.topP,
+      frequency_penalty: options.frequencyPenalty,
+      presence_penalty: options.presencePenalty,
+      stop: options.stopSequences,
+      tools: options.tools?.map((t) => ({
+        type: t.type,
+        function: t.function,
+      })),
+      tool_choice: options.toolChoice as any,
+      stream: true,
+    });
+
+    let accumulatedContent = "";
+    const timestamp = Date.now();
+
+    try {
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0]?.delta;
+        const choice = chunk.choices[0];
+
+        // Handle content delta
+        if (delta?.content) {
+          accumulatedContent += delta.content;
+          yield {
+            type: "content",
+            id: chunk.id,
+            model: chunk.model,
+            timestamp,
+            delta: delta.content,
+            content: accumulatedContent,
+            role: "assistant",
+          };
+        }
+
+        // Handle tool calls
+        if (delta?.tool_calls) {
+          for (const toolCall of delta.tool_calls) {
+            yield {
+              type: "tool_call",
+              id: chunk.id,
+              model: chunk.model,
+              timestamp,
+              toolCall: {
+                id: toolCall.id || `call_${Date.now()}`,
+                type: "function",
+                function: {
+                  name: toolCall.function?.name || "",
+                  arguments: toolCall.function?.arguments || "",
+                },
+              },
+              index: toolCall.index || 0,
+            };
+          }
+        }
+
+        // Handle completion
+        if (choice?.finish_reason) {
+          yield {
+            type: "done",
+            id: chunk.id,
+            model: chunk.model,
+            timestamp,
+            finishReason: choice.finish_reason as any,
+            usage: chunk.usage
+              ? {
+                  promptTokens: chunk.usage.prompt_tokens || 0,
+                  completionTokens: chunk.usage.completion_tokens || 0,
+                  totalTokens: chunk.usage.total_tokens || 0,
+                }
+              : undefined,
+          };
+        }
+      }
+    } catch (error: any) {
+      yield {
+        type: "error",
+        id: this.generateId(),
+        model: options.model || "gpt-3.5-turbo",
+        timestamp,
+        error: {
+          message: error.message || "Unknown error occurred",
+          code: error.code,
+        },
+      };
     }
   }
 

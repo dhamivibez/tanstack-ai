@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI, Content } from "@google/generative-ai";
 import {
   BaseAdapter,
+  convertLegacyStream,
   type AIAdapterConfig,
   type ChatCompletionOptions,
   type ChatCompletionResult,
@@ -12,6 +13,7 @@ import {
   type EmbeddingOptions,
   type EmbeddingResult,
   type Message,
+  type StreamChunk,
 } from "@tanstack/ai";
 
 export interface GeminiAdapterConfig extends AIAdapterConfig {
@@ -44,7 +46,7 @@ export class GeminiAdapter extends BaseAdapter {
     const lastMessage = options.messages[options.messages.length - 1];
 
     const chat = model.startChat({ history });
-    const result = await chat.sendMessage(lastMessage.content);
+    const result = await chat.sendMessage(lastMessage.content || "");
     const response = await result.response;
     const text = response.text();
 
@@ -85,7 +87,7 @@ export class GeminiAdapter extends BaseAdapter {
     const lastMessage = options.messages[options.messages.length - 1];
 
     const chat = model.startChat({ history });
-    const result = await chat.sendMessageStream(lastMessage.content);
+    const result = await chat.sendMessageStream(lastMessage.content || "");
 
     for await (const chunk of result.stream) {
       const text = chunk.text();
@@ -98,6 +100,17 @@ export class GeminiAdapter extends BaseAdapter {
         };
       }
     }
+  }
+
+  async *chatStream(
+    options: ChatCompletionOptions
+  ): AsyncIterable<StreamChunk> {
+    // Use legacy stream converter for now
+    // TODO: Implement native structured streaming for Gemini
+    yield* convertLegacyStream(
+      this.chatCompletionStream(options),
+      options.model || "gemini-pro"
+    );
   }
 
   async generateText(
@@ -220,7 +233,7 @@ export class GeminiAdapter extends BaseAdapter {
   private formatMessagesForGemini(messages: Message[]): Content[] {
     return messages.map((msg) => ({
       role: msg.role === "assistant" ? "model" : "user",
-      parts: [{ text: msg.content }],
+      parts: [{ text: msg.content || "" }],
     }));
   }
 

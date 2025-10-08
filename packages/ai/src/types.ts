@@ -1,7 +1,27 @@
+export interface ToolCall {
+  id: string;
+  type: "function";
+  function: {
+    name: string;
+    arguments: string; // JSON string
+  };
+}
+
 export interface Message {
-  role: "system" | "user" | "assistant";
-  content: string;
+  role: "system" | "user" | "assistant" | "tool";
+  content: string | null;
   name?: string;
+  toolCalls?: ToolCall[];
+  toolCallId?: string;
+}
+
+export interface Tool {
+  type: "function";
+  function: {
+    name: string;
+    description: string;
+    parameters: Record<string, any>; // JSON Schema
+  };
 }
 
 export interface ChatCompletionOptions {
@@ -14,9 +34,68 @@ export interface ChatCompletionOptions {
   presencePenalty?: number;
   stopSequences?: string[];
   stream?: boolean;
+  tools?: Tool[];
+  toolChoice?:
+    | "auto"
+    | "none"
+    | { type: "function"; function: { name: string } };
   metadata?: Record<string, any>;
 }
 
+export type StreamChunkType = "content" | "tool_call" | "done" | "error";
+
+export interface BaseStreamChunk {
+  type: StreamChunkType;
+  id: string;
+  model: string;
+  timestamp: number;
+}
+
+export interface ContentStreamChunk extends BaseStreamChunk {
+  type: "content";
+  delta: string; // The incremental content token
+  content: string; // Full accumulated content so far
+  role?: "assistant";
+}
+
+export interface ToolCallStreamChunk extends BaseStreamChunk {
+  type: "tool_call";
+  toolCall: {
+    id: string;
+    type: "function";
+    function: {
+      name: string;
+      arguments: string; // Incremental JSON arguments
+    };
+  };
+  index: number;
+}
+
+export interface DoneStreamChunk extends BaseStreamChunk {
+  type: "done";
+  finishReason: "stop" | "length" | "content_filter" | "tool_calls" | null;
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+}
+
+export interface ErrorStreamChunk extends BaseStreamChunk {
+  type: "error";
+  error: {
+    message: string;
+    code?: string;
+  };
+}
+
+export type StreamChunk =
+  | ContentStreamChunk
+  | ToolCallStreamChunk
+  | DoneStreamChunk
+  | ErrorStreamChunk;
+
+// Legacy support - keep for backwards compatibility
 export interface ChatCompletionChunk {
   id: string;
   model: string;
@@ -33,9 +112,10 @@ export interface ChatCompletionChunk {
 export interface ChatCompletionResult {
   id: string;
   model: string;
-  content: string;
+  content: string | null;
   role: "assistant";
-  finishReason: "stop" | "length" | "content_filter" | null;
+  finishReason: "stop" | "length" | "content_filter" | "tool_calls" | null;
+  toolCalls?: ToolCall[];
   usage: {
     promptTokens: number;
     completionTokens: number;
@@ -107,9 +187,14 @@ export interface AIAdapter {
 
   // Chat methods
   chatCompletion(options: ChatCompletionOptions): Promise<ChatCompletionResult>;
+
+  // Legacy streaming (kept for backwards compatibility)
   chatCompletionStream(
     options: ChatCompletionOptions
   ): AsyncIterable<ChatCompletionChunk>;
+
+  // New structured streaming with JSON chunks
+  chatStream(options: ChatCompletionOptions): AsyncIterable<StreamChunk>;
 
   // Text generation methods
   generateText(options: TextGenerationOptions): Promise<TextGenerationResult>;

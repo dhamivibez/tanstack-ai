@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import {
   BaseAdapter,
+  convertLegacyStream,
   type AIAdapterConfig,
   type ChatCompletionOptions,
   type ChatCompletionResult,
@@ -12,6 +13,7 @@ import {
   type EmbeddingOptions,
   type EmbeddingResult,
   type Message,
+  type StreamChunk,
 } from "@tanstack/ai";
 
 export interface AnthropicAdapterConfig extends AIAdapterConfig {
@@ -103,6 +105,17 @@ export class AnthropicAdapter extends BaseAdapter {
         };
       }
     }
+  }
+
+  async *chatStream(
+    options: ChatCompletionOptions
+  ): AsyncIterable<StreamChunk> {
+    // Use legacy stream converter for now
+    // TODO: Implement native structured streaming for Anthropic
+    yield* convertLegacyStream(
+      this.chatCompletionStream(options),
+      options.model || "claude-3-sonnet-20240229"
+    );
   }
 
   async generateText(
@@ -202,10 +215,10 @@ export class AnthropicAdapter extends BaseAdapter {
     const nonSystemMessages = messages.filter((m) => m.role !== "system");
 
     return {
-      systemMessage: systemMessages.map((m) => m.content).join("\n"),
+      systemMessage: systemMessages.map((m) => m.content || "").join("\n"),
       messages: nonSystemMessages.map((m) => ({
         role: m.role === "assistant" ? "assistant" : "user",
-        content: m.content,
+        content: m.content || "",
       })),
     };
   }

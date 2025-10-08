@@ -59,10 +59,31 @@ const response = await ai.chat({
 console.log(response.content);
 ```
 
-### Streaming Chat
+### Streaming Chat (Structured JSON Chunks)
 
 ```typescript
-// Stream responses for real-time interaction
+// Stream responses with structured JSON chunks - works with ALL providers!
+for await (const chunk of ai.streamChat({
+  model: "gpt-3.5-turbo",
+  messages: [{ role: "user", content: "Tell me a story" }],
+})) {
+  if (chunk.type === "content") {
+    process.stdout.write(chunk.delta); // Write incremental tokens
+    console.log("Full so far:", chunk.content); // Accumulated content
+  } else if (chunk.type === "tool_call") {
+    console.log("Tool:", chunk.toolCall.function.name);
+  } else if (chunk.type === "done") {
+    console.log("Tokens used:", chunk.usage?.totalTokens);
+  } else if (chunk.type === "error") {
+    console.error("Error:", chunk.error.message);
+  }
+}
+```
+
+### Legacy Streaming (Simple)
+
+```typescript
+// Simple streaming (backwards compatible)
 for await (const chunk of ai.chatStream({
   model: "gpt-3.5-turbo",
   messages: [{ role: "user", content: "Tell me a story" }],
@@ -156,8 +177,16 @@ The CLI will:
 ### 🎯 All Commands
 
 ```bash
-# From root directory
+# From root directory - ALL providers use streaming!
 pnpm cli chat --provider openai
+pnpm cli chat --provider anthropic
+pnpm cli chat --provider ollama
+pnpm cli chat --provider gemini
+
+# Debug mode - see raw JSON stream chunks
+pnpm cli chat --provider openai --debug
+
+# Other commands
 pnpm cli generate --provider anthropic
 pnpm cli summarize --provider gemini
 pnpm cli embed --provider ollama
@@ -167,6 +196,7 @@ cd examples/cli
 
 # For development (no build needed)
 pnpm dev chat --provider openai
+pnpm dev chat --provider anthropic --debug
 
 # Use the built version
 pnpm start chat --provider anthropic

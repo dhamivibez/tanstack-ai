@@ -26,6 +26,9 @@ export abstract class BaseAdapter implements AIAdapter {
   abstract chatCompletionStream(
     options: ChatCompletionOptions
   ): AsyncIterable<ChatCompletionChunk>;
+  abstract chatStream(
+    options: ChatCompletionOptions
+  ): AsyncIterable<import("./types").StreamChunk>;
   abstract generateText(
     options: TextGenerationOptions
   ): Promise<TextGenerationResult>;
