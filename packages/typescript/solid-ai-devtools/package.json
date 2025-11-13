@@ -1,7 +1,7 @@
 {
-  "name": "@tanstack/ai",
+  "name": "@tanstack/solid-ai-devtools",
   "version": "0.1.0",
-  "description": "Core TanStack AI library - Open source AI SDK",
+  "description": "Solid TanStack AI Devtools",
   "author": "",
   "license": "MIT",
   "repository": {
@@ -17,9 +17,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./event-client": {
-      "types": "./dist/event-client.d.ts",
-      "import": "./dist/event-client.js"
+    "./production": {
+      "import": {
+        "types": "./dist/production.d.ts",
+        "default": "./dist/production.js"
+      }
     }
   },
   "files": [
@@ -44,12 +46,16 @@
     "embeddings"
   ],
   "dependencies": {
-    "@tanstack/devtools-event-client": "^0.3.4"
+    "@tanstack/devtools-utils": "^0.0.6",
+    "@tanstack/ai-devtools-core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
     "tsdown": "^0.15.9",
     "typescript": "^5.7.2",
     "vitest": "^3.0.5"
+  },
+  "peerDependencies": {
+    "solid-js": ">=1.9.7"
   }
 }

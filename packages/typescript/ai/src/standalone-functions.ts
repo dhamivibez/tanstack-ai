@@ -15,8 +15,10 @@ import type {
   TextToSpeechResult,
   VideoGenerationOptions,
   VideoGenerationResult,
+  ResponseFormat,
 } from "./types";
-import { ai as AI } from "./ai";
+import { AI } from "./ai";
+import { aiEventClient } from "./event-client.js";
 
 // Extract types from adapter
 type ExtractModelsFromAdapter<T> = T extends AIAdapter<
@@ -161,8 +163,8 @@ type ChatCompletionOptionsWithAdapter<
 // Helper type for chatCompletion return type
 type ChatCompletionReturnType<TOutput extends ResponseFormat<any> | undefined> =
   TOutput extends ResponseFormat<infer TData>
-    ? ChatCompletionResult<TData>
-    : ChatCompletionResult;
+  ? ChatCompletionResult<TData>
+  : ChatCompletionResult;
 
 /**
  * Standalone chat streaming function with type inference from adapter
@@ -196,9 +198,32 @@ type ChatCompletionReturnType<TOutput extends ResponseFormat<any> | undefined> =
 export function chat<
   TAdapter extends AIAdapter<any, any, any, any, any, any, any, any, any, any>
 >(options: ChatStreamOptions<TAdapter>): AsyncIterable<StreamChunk> {
-  const { adapter, ...restOptions } = options;
+  const {
+    adapter,
+    model,
+    messages,
+    tools,
+    agentLoopStrategy,
+    providerOptions,
+    ...restOptions
+  } = options;
   const aiInstance = new AI({ adapter });
-  return aiInstance.chat(restOptions as any);
+
+  aiEventClient.emit("standalone:chat-started", {
+    timestamp: Date.now(),
+    adapterName: adapter.name,
+    model: model as string,
+    streaming: true,
+  });
+
+  return aiInstance.chat({
+    model,
+    messages,
+    tools,
+    agentLoopStrategy,
+    options: restOptions as any,
+    providerOptions,
+  });
 }
 
 /**
@@ -237,9 +262,36 @@ export async function chatCompletion<
 >(
   options: ChatCompletionOptionsWithAdapter<TAdapter, TOutput>
 ): Promise<ChatCompletionReturnType<TOutput>> {
-  const { adapter, ...restOptions } = options;
+  const {
+    adapter,
+    model,
+    messages,
+    tools,
+    output,
+    providerOptions,
+    ...restOptions
+  } = options;
   const aiInstance = new AI({ adapter });
-  return aiInstance.chatCompletion(restOptions as any) as any;
+  const startTime = Date.now();
+
+  aiEventClient.emit("standalone:chat-completion-started", {
+    timestamp: startTime,
+    adapterName: adapter.name,
+    model: model as string,
+    hasOutput: !!output,
+  });
+
+  const result = await aiInstance.chatCompletion({
+    model,
+    messages,
+    tools,
+    options: { ...restOptions } as any,
+    providerOptions,
+    output,
+  }) as any;
+
+
+  return result;
 }
 
 /**

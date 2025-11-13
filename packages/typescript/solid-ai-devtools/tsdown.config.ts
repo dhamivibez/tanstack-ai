@@ -1,7 +1,7 @@
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
-  entry: ["./src/index.ts", "./src/event-client.ts"],
+  entry: ["./src/index.ts", "./src/production.ts"],
   format: ["esm"],
   unbundle: true,
   dts: true,
