@@ -75,8 +75,6 @@ importers:
         specifier: ^4.0.14
         version: 4.0.14(@types/node@24.10.1)(happy-dom@20.0.10)(jiti@2.6.1)(jsdom@27.2.0(postcss@8.5.6))(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1)
 
-  examples/cli: {}
-
   examples/php-slim: {}
 
   examples/python-fastapi: {}
@@ -204,6 +202,97 @@ importers:
       '@types/react-dom':
         specifier: ^19.2.3
         version: 19.2.3(@types/react@19.2.7)
+      '@vitejs/plugin-react':
+        specifier: ^5.1.1
+        version: 5.1.1(vite@7.2.4(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
+      jsdom:
+        specifier: ^27.2.0
+        version: 27.2.0(postcss@8.5.6)
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^7.2.4
+        version: 7.2.4(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1)
+      vitest:
+        specifier: ^4.0.14
+        version: 4.0.14(@types/node@24.10.1)(happy-dom@20.0.10)(jiti@2.6.1)(jsdom@27.2.0(postcss@8.5.6))(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1)
+      web-vitals:
+        specifier: ^5.1.0
+        version: 5.1.0
+
+  examples/ts-group-chat:
+    dependencies:
+      '@tailwindcss/vite':
+        specifier: ^4.1.17
+        version: 4.1.17(vite@7.2.4(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
+      '@tanstack/ai':
+        specifier: workspace:*
+        version: link:../../packages/typescript/ai
+      '@tanstack/ai-anthropic':
+        specifier: workspace:*
+        version: link:../../packages/typescript/ai-anthropic
+      '@tanstack/ai-client':
+        specifier: workspace:*
+        version: link:../../packages/typescript/ai-client
+      '@tanstack/ai-react':
+        specifier: workspace:*
+        version: link:../../packages/typescript/ai-react
+      '@tanstack/react-devtools':
+        specifier: ^0.8.2
+        version: 0.8.2(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(csstype@3.2.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(solid-js@1.9.10)
+      '@tanstack/react-router':
+        specifier: ^1.139.7
+        version: 1.139.7(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@tanstack/react-router-devtools':
+        specifier: ^1.139.7
+        version: 1.139.7(@tanstack/react-router@1.139.7(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(@tanstack/router-core@1.139.7)(@types/node@24.10.1)(csstype@3.2.3)(jiti@2.6.1)(lightningcss@1.30.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(solid-js@1.9.10)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1)
+      '@tanstack/react-router-ssr-query':
+        specifier: ^1.139.7
+        version: 1.139.7(@tanstack/query-core@5.90.5)(@tanstack/react-query@5.90.5(react@19.2.0))(@tanstack/react-router@1.139.7(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(@tanstack/router-core@1.139.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@tanstack/react-start':
+        specifier: ^1.139.8
+        version: 1.139.8(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vite-plugin-solid@2.11.10(@testing-library/jest-dom@6.9.1)(solid-js@1.9.10)(vite@7.2.4(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1)))(vite@7.2.4(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
+      '@tanstack/router-plugin':
+        specifier: ^1.139.7
+        version: 1.139.7(@tanstack/react-router@1.139.7(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite-plugin-solid@2.11.10(@testing-library/jest-dom@6.9.1)(solid-js@1.9.10)(vite@7.2.4(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1)))(vite@7.2.4(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
+      capnweb:
+        specifier: ^0.1.0
+        version: 0.1.0
+      react:
+        specifier: ^19.2.0
+        version: 19.2.0
+      react-dom:
+        specifier: ^19.2.0
+        version: 19.2.0(react@19.2.0)
+      tailwindcss:
+        specifier: ^4.1.17
+        version: 4.1.17
+      vite-tsconfig-paths:
+        specifier: ^5.1.4
+        version: 5.1.4(typescript@5.9.3)(vite@7.2.4(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
+      ws:
+        specifier: ^8.18.3
+        version: 8.18.3
+    devDependencies:
+      '@testing-library/dom':
+        specifier: ^10.4.1
+        version: 10.4.1
+      '@testing-library/react':
+        specifier: ^16.3.0
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@types/node':
+        specifier: ^24.10.1
+        version: 24.10.1
+      '@types/react':
+        specifier: ^19.2.7
+        version: 19.2.7
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.7)
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
       '@vitejs/plugin-react':
         specifier: ^5.1.1
         version: 5.1.1(vite@7.2.4(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
@@ -2234,6 +2323,9 @@ packages:
   '@types/whatwg-mimetype@3.0.2':
     resolution: {integrity: sha512-c2AKvDT8ToxLIOUlN51gTiHXflsfIFisS4pO7pDPoKouJCESkhZnEy623gwP9laCy5lnLDAw1vAzu2vM2YLOrA==}
 
+  '@types/ws@8.18.1':
+    resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
+
   '@typescript-eslint/eslint-plugin@8.46.3':
     resolution: {integrity: sha512-sbaQ27XBUopBkRiuY/P9sWGOWUW4rl8fDoHIUmLpZd8uldsTyB4/Zg6bWTegPoTLnKj9Hqgn3QD6cjPNB32Odw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
@@ -2782,6 +2874,9 @@ packages:
 
   caniuse-lite@1.0.30001752:
     resolution: {integrity: sha512-vKUk7beoukxE47P5gcVNKkDRzXdVofotshHwfR9vmpeFKxmI5PBpgOMC18LUJUA/DvJ70Y7RveasIBraqsyO/g==}
+
+  capnweb@0.1.0:
+    resolution: {integrity: sha512-+pygKx1JFTZTRdd1hHgaBRg5BwULEDZq8ZoHXkYP2GXNV3lrjXLj5qzlGz+SgBCJjWUmNBtlh7JPWdr0wIbY8w==}
 
   ccount@2.0.1:
     resolution: {integrity: sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg==}
@@ -7898,6 +7993,10 @@ snapshots:
 
   '@types/whatwg-mimetype@3.0.2': {}
 
+  '@types/ws@8.18.1':
+    dependencies:
+      '@types/node': 24.10.1
+
   '@typescript-eslint/eslint-plugin@8.46.3(@typescript-eslint/parser@8.46.3(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)':
     dependencies:
       '@eslint-community/regexpp': 4.12.2
@@ -8518,6 +8617,8 @@ snapshots:
   callsites@3.1.0: {}
 
   caniuse-lite@1.0.30001752: {}
+
+  capnweb@0.1.0: {}
 
   ccount@2.0.1: {}
 
