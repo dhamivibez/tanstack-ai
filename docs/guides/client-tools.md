@@ -1,6 +1,55 @@
-# Client Tools
+---
+title: Client Tools
+id: client-tools
+---
 
-Client tools execute in the browser, allowing you to interact with the UI, local storage, and browser APIs with full type safety.
+Client tools execute in the browser, enabling UI updates, local storage access, and browser API interactions. Unlike server tools, client tools don't have an `execute` function in their server definition.
+
+```mermaid
+sequenceDiagram
+    participant LLM Service
+    participant Server
+    participant Browser
+    participant ClientTool
+    
+    LLM Service->>Server: tool_call chunk<br/>{name: "updateUI", args: {...}}
+    Server->>Server: Check if tool has<br/>server execute
+    
+    Note over Server: No execute function<br/>= client tool
+    
+    Server->>Browser: Forward tool-input-available<br/>chunk via SSE/HTTP
+    Browser->>Browser: onToolCall callback<br/>triggered
+    Browser->>ClientTool: execute(args)
+    ClientTool->>ClientTool: Update UI,<br/>localStorage, etc.
+    ClientTool-->>Browser: Return result
+    Browser->>Server: POST tool result
+    Server->>LLM Service: Add tool_result<br/>to conversation
+    
+    Note over LLM Service: Model uses result<br/>to continue
+    
+    LLM Service-->>Server: Stream response
+    Server-->>Browser: Forward chunks
+```
+
+## When to Use Client Tools
+
+- **UI Updates**: Show notifications, update forms, toggle visibility
+- **Local Storage**: Save user preferences, cache data
+- **Browser APIs**: Access geolocation, camera, clipboard
+- **State Management**: Update React/Vue/Solid state
+- **Navigation**: Change routes, scroll to sections
+
+## How It Works
+
+1. **Tool Call from LLM**: LLM decides to call a client tool
+2. **Server Detection**: Server sees the tool has no `execute` function
+3. **Client Notification**: Server sends a `tool-input-available` chunk to the browser
+4. **Client Execution**: Browser's `onToolCall` callback is triggered with:
+   - `toolName`: Name of the tool to execute
+   - `input`: Parsed arguments
+5. **Result Return**: Client executes the tool and returns the result
+6. **Server Update**: Result is sent back to the server and added to the conversation
+7. **LLM Continuation**: LLM receives the result and continues the conversation
 
 ## Defining Client Tools
 
@@ -40,7 +89,7 @@ export const saveToLocalStorageDef = toolDefinition({
 
 ### Server-Side
 
-Pass tool definitions (not implementations) to the server so the LLM knows about them:
+To give the LLM access to client tools, pass the tool definitions (not implementations) to the server when creating the chat:
 
 ```typescript
 // api/chat/route.ts
@@ -150,7 +199,7 @@ function MessageComponent({ message }: { message: ChatMessages[number] }) {
 
 ## Automatic Execution
 
-Client tools are **automatically executed** when the model calls them. No manual `onToolCall` callback needed!
+Client tools are **automatically executed** when the model calls them. No manual `onToolCall` callback needed! The flow is:
 
 1. LLM calls a client tool
 2. Server sends `tool-input-available` chunk to browser
@@ -181,8 +230,14 @@ messages.forEach((message) => {
 ```
 
 ## Tool States
+Client tools go through a small set of observable lifecycle states you can surface in the UI to indicate progress:
 
-Client tools go through different states that you can observe in the UI:
+- `awaiting-input` — the model intends to call the tool but arguments haven’t arrived yet.
+- `input-streaming` — the model is streaming the tool arguments (partial input may be available).
+- `input-complete` — all arguments have been received and the tool is executing.
+- `completed` — the tool finished; part.output contains the result (or error details).
+
+Use these states to show loading indicators, streaming progress, and final success/error feedback. The example below maps each state to a simple UI message.
 
 ```typescript
 function ToolCallDisplay({ part }: { part: ToolCallPart }) {
@@ -250,12 +305,12 @@ chat({ tools: [addToCartServer] }); // Server will execute
 
 ## Best Practices
 
-1. **Keep client tools simple** - They run in the browser, so avoid heavy computations
-2. **Handle errors gracefully** - Return meaningful error messages in your output schema
-3. **Update UI reactively** - Use React/Vue/Solid state updates for UI changes
-4. **Secure sensitive data** - Never store sensitive data in local storage
-5. **Provide feedback** - Use tool states to show loading/success/error UI
-6. **Type everything** - Use Zod schemas for complete type safety
+- **Keep client tools simple** - Since client tools run in the browser, avoid heavy computations or large dependencies that could bloat your bundle size.
+- **Handle errors gracefully** - Define clear error handling in your tool implementations and return meaningful error messages in your output schema.
+- **Update UI reactively** - Use your framework’s state management (eg. React/Vue/Solid) to update the UI in response to tool executions.
+- **Secure sensitive data** - Never store sensitive data (like API keys or personal info) in local storage or expose it via client tools.
+- **Provide feedback** - Use tool states to inform users about ongoing operations and results of client tool executions (loading spinners, success messages, error alerts).
+- **Type everything** - Leverage TypeScript and Zod schemas for full type safety from tool definitions to implementations to usage.
 
 ## Common Use Cases
 
