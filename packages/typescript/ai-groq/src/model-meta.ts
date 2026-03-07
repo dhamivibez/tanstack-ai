@@ -353,13 +353,22 @@ export type GroqChatModelProviderOptionsByName = {
 }
 
 /**
+ * Type-only map from Groq TTS model name to its provider options type.
+ */
+export type GroqTTSModelProviderOptionsByName = {
+  [K in GroqTTSModel]: GroqTTSProviderOptions
+}
+
+/**
  * Resolves the provider options type for a specific Groq model.
- * Falls back to generic GroqTextProviderOptions for unknown models.
+ * Checks TTS models first, then chat models, then falls back to generic options.
  */
 export type ResolveProviderOptions<TModel extends string> =
-  TModel extends keyof GroqChatModelProviderOptionsByName
-    ? GroqChatModelProviderOptionsByName[TModel]
-    : GroqTextProviderOptions
+  TModel extends GroqTTSModel
+    ? GroqTTSProviderOptions
+    : TModel extends keyof GroqChatModelProviderOptionsByName
+      ? GroqChatModelProviderOptionsByName[TModel]
+      : GroqTextProviderOptions
 
 /**
  * Resolve input modalities for a specific model.
