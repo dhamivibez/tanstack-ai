@@ -106,10 +106,10 @@ Groq supports various provider-specific options:
 ```typescript
 const stream = chat({
   adapter: groqText("llama-3.3-70b-versatile"),
-  messages,
+  messages: [{ role: "user", content: "Hello!" }],
   modelOptions: {
     temperature: 0.7,
-    max_tokens: 1024,
+    max_completion_tokens: 1024,
     top_p: 0.9,
   },
 });
@@ -221,6 +221,8 @@ Creates a Groq chat adapter using environment variables.
 **Parameters:**
 
 - `model` - The model name (e.g., `llama-3.3-70b-versatile`)
+- `config` (optional) - Optional configuration object. Supports the same options as `createGroqText` except `apiKey`, which is auto-detected from `GROQ_API_KEY` environment variable. Common options:
+  - `baseURL` - Custom base URL for API requests (optional)
 
 **Returns:** A Groq chat adapter instance.
 
@@ -232,7 +234,8 @@ Creates a Groq chat adapter with an explicit API key.
 
 - `model` - The model name (e.g., `llama-3.3-70b-versatile`)
 - `apiKey` - Your Groq API key
-- `config.baseURL?` - Custom base URL (optional)
+- `config` (optional) - Optional configuration object:
+  - `baseURL` - Custom base URL for API requests (optional)
 
 **Returns:** A Groq chat adapter instance.
 
