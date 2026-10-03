@@ -648,7 +648,38 @@ const CLAUDE_OPUS_5_5 = {
     AnthropicOutputConfigOptions
 >
 
+const CLAUDE_SONNET_5_5 = {
+  name: 'claude-sonnet-5-5',
+  id: 'claude-sonnet-5-5',
+  context_window: 1_000_000,
+  max_output_tokens: 128_000,
+  supports: {
+    input: ['text', 'image', 'document'],
+    tools: [],
+  },
+  pricing: {
+    input: {
+      normal: 2,
+      cached: 0.2,
+    },
+    output: {
+      normal: 10,
+    },
+  },
+} as const satisfies ModelMeta<
+  AnthropicCacheControlOptions &
+    AnthropicContainerOptions &
+    AnthropicContextManagementOptions &
+    AnthropicMCPOptions &
+    AnthropicServiceTierOptions &
+    AnthropicStopSequencesOptions &
+    AnthropicAdaptiveOnlyThinkingOptions &
+    AnthropicToolChoiceOptions &
+    AnthropicSamplingOptions
+>
+
 export const ANTHROPIC_MODELS = [
+  CLAUDE_SONNET_5_5.id,
   CLAUDE_OPUS_5_5.id,
   CLAUDE_FABLE_5_1.id,
   CLAUDE_OPUS_5.id,
@@ -728,6 +759,7 @@ const ANTHROPIC_MODEL_MAX_OUTPUT_TOKENS: Record<string, number> = {
   [CLAUDE_OPUS_5_FAST.id]: CLAUDE_OPUS_5_FAST.max_output_tokens,
   [CLAUDE_FABLE_5_1.id]: CLAUDE_FABLE_5_1.max_output_tokens,
   [CLAUDE_OPUS_5_5.id]: CLAUDE_OPUS_5_5.max_output_tokens,
+  [CLAUDE_SONNET_5_5.id]: CLAUDE_SONNET_5_5.max_output_tokens,
 }
 
 /**
@@ -944,6 +976,15 @@ export type AnthropicChatModelProviderOptionsByName = {
     AnthropicToolChoiceOptions &
     AnthropicSamplingOptions &
     AnthropicOutputConfigOptions
+  [CLAUDE_SONNET_5_5.id]: AnthropicCacheControlOptions &
+    AnthropicContainerOptions &
+    AnthropicContextManagementOptions &
+    AnthropicMCPOptions &
+    AnthropicServiceTierOptions &
+    AnthropicStopSequencesOptions &
+    AnthropicAdaptiveOnlyThinkingOptions &
+    AnthropicToolChoiceOptions &
+    AnthropicSamplingOptions
 }
 
 export type AnthropicChatModelToolCapabilitiesByName = {
@@ -961,6 +1002,7 @@ export type AnthropicChatModelToolCapabilitiesByName = {
   [CLAUDE_OPUS_5_FAST.id]: typeof CLAUDE_OPUS_5_FAST.supports.tools
   [CLAUDE_FABLE_5_1.id]: typeof CLAUDE_FABLE_5_1.supports.tools
   [CLAUDE_OPUS_5_5.id]: typeof CLAUDE_OPUS_5_5.supports.tools
+  [CLAUDE_SONNET_5_5.id]: typeof CLAUDE_SONNET_5_5.supports.tools
 }
 
 /**
@@ -989,4 +1031,5 @@ export type AnthropicModelInputModalitiesByName = {
   [CLAUDE_OPUS_5_FAST.id]: typeof CLAUDE_OPUS_5_FAST.supports.input
   [CLAUDE_FABLE_5_1.id]: typeof CLAUDE_FABLE_5_1.supports.input
   [CLAUDE_OPUS_5_5.id]: typeof CLAUDE_OPUS_5_5.supports.input
+  [CLAUDE_SONNET_5_5.id]: typeof CLAUDE_SONNET_5_5.supports.input
 }
